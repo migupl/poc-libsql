@@ -2,9 +2,7 @@
 
 [libSQL](https://github.com/tursodatabase/libsql) ([Manifesto](https://turso.tech/libsql-manifesto)) by [Turso](https://turso.tech/) is an open-source fork of sqlite. It's super fast, lightweight, and pretty simple to self host.
 
-Turso created a server mode for libSQL called sqld which we'll be using on a VPS (Virtual Private Server).
-
-There are a few options for self hosting sqld, but I'll be using the prebuilt Docker image method.
+Turso created a server mode for libSQL called **sqld**. There are a few options for self hosting sqld, but but we will use the precompiled Docker image method on our local machine.
 
 ## Run `sqld` using Docker
 
@@ -70,6 +68,27 @@ Options:
           [default: data.sqld]
 ...
 ```
+
+## Run a simple script
+
+Python tool [uv](https://docs.astral.sh/uv/) and its ability to execute single-file Python scripts containing references to external Python packages without much ceremony will be used. This feat is achieved by uv with the help of [PEP 723](https://peps.python.org/pep-0723/) which focuses on ‘Inline script metadata’. This PEP defines a standardised method for embedding script metadata, including external package dependencies, directly into single-file Python scripts.
+
+There are two libraries for LibSQL to interact with Python, the [libsql-client](https://github.com/tursodatabase/libsql-client-py) and the [libsql-experimental-python](https://github.com/tursodatabase/libsql-experimental-python). The former is the recommended client as it is stable, whereas the latter is in development and has the latest features from the libsql database engine, however, it is compatible with the [sqlite](https://docs.python.org/3/library/sqlite3.html) module.
+
+```bash
+$ uv init --script playing-with-libsql.py
+Initialized script at `playing-with-libsql.py`
+$ uv add --script playing-with-libsql.py asyncio libsql_client
+Updated `playing-with-libsql.py`
+```
+
+```bash
+$ uv run --script playing-with-libsql.py
+1 rows
+('It works!!!',)
+```
+
+Note that the connection URL is hardcoded as a simplification but best practice is that these values are defined in environment variables.
 
 ---
 Related to the articles [SQLite-on-the-Server Is Misunderstood: Better At Hyper-Scale Than Micro-Scale](https://rivet.gg/blog/2025-02-16-sqlite-on-the-server-is-misunderstood) and [Self-hosting Turso libSQL](https://hubertlin.me/posts/2024/11/self-hosting-turso-libsql/)
