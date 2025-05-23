@@ -5,7 +5,13 @@
 SHELL=/bin/bash -eu -o pipefail
 
 IMAGE_NAME := ghcr.io/tursodatabase/libsql-server:latest
-CONTAINER_NAME := libsql-server_latest
+
+ifeq (,$(wildcard ./sqld-data/public.pub))
+	CONTAINER_NAME := libsql-server_latest
+else
+	CONTAINER_NAME := secure-libsql-server_latest
+	ENV_FILE := --env-file .env
+endif
 
 UV := $(shell command -v uv)
 
@@ -17,7 +23,7 @@ endif
 .PHONY: first-start
 first-start:  ## Run a new container 'CONTAINER_NAME' using the image IMAGE_NAME
 	mkdir -p sqld-data
-	docker run -p 8081:8080 --name $(CONTAINER_NAME) -v `pwd`/sqld-data:/var/lib/sqld -d $(IMAGE_NAME)
+	docker run -p 8080:8080 --name $(CONTAINER_NAME) $(ENV_FILE) -v `pwd`/sqld-data:/var/lib/sqld -d $(IMAGE_NAME)
 
 .PHONY: start
 start:  ## Run the container 'CONTAINER_NAME'
@@ -32,12 +38,12 @@ stop:  ## Stop the container 'CONTAINER_NAME'
 	docker stop $(CONTAINER_NAME)
 
 .PHONY: playing-with-libsql
-playing-with-libsql: deps ## Run a simple script to test the database
-	uv run --script playing-with-libsql.py
+playing-with-libsql: deps ## Run a simple script to test the database. When JWT_TOKEN variable exists then the secure server is used.
+	uv run --script playing-with-libsql.py $(JWT_TOKEN)
 
-.PHONY: generate-jsw
-generate-jsw: deps ## Run a simple script to generate an ED25519 key pairs and JWT token. Test the last one with and without expiration time.
-	uv run --script generate-jsw.py 
+.PHONY: generate-jwt
+generate-jwt: deps ## Run a simple script to generate an ED25519 key pairs and JWT token. Test the last one with and without expiration time.
+	uv run --script generate-jwt.py
 
 .PHONY: help
 help:

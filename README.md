@@ -8,12 +8,12 @@ Turso created a server mode for libSQL called **sqld**. There are a few options 
 
 ```bash
 $ make
-vailable make commands:
+Available make commands:
 
 alive                     Run `sqld -help` on the container 'libsql-server_latest' to check it is alive
 first-start               Run a new container 'libsql-server_latest' using the image ghcr.io/tursodatabase/libsql-server
-generate-jsw              Run a simple script to generate an ED25519 key pairs and JWT token. Test the last one with and without expiration time.
-playing-with-libsql       Run a simple script to test the database
+generate-jwt              Run a simple script to generate an ED25519 key pairs and JWT token. Test the last one with and without expiration time.
+playing-with-libsql       Run a simple script to test the database. When JWT_TOKEN variable exists then the secure server is used.
 start                     Run the container 'libsql-server_latest'
 stop                      Stop the container 'libsql-server_latest'
 ```
@@ -106,7 +106,7 @@ There are two libraries for LibSQL to interact with Python, the [libsql-client](
 ```bash
 $ uv init --script playing-with-libsql.py
 Initialized script at `playing-with-libsql.py`
-$ uv add --script playing-with-libsql.py asyncio libsql_client
+$ uv add --script playing-with-libsql.py argparse asyncio libsql_client
 Updated `playing-with-libsql.py`
 ```
 
@@ -144,38 +144,44 @@ Generate a JWT token using the libraries:
 - [pyJWT](https://pyjwt.readthedocs.io/en/stable/index.html)is a Python library which allows you to encode and decode JSON Web Tokens (JWT). JWT is an open, industry-standard (RFC 7519) for representing claims securely between two parties.
 - [cryptography](https://cryptography.io/en/latest/)is a package designed to expose cryptographic primitives and recipes to Python developers.
 
-```bash
-$ uv init --script generate-jsw.py
-Initialized script at `generate-jsw.py`
-$ uv add --script generate-jsw.py pyJWT cryptography
-Updated `generate-jsw.py`
-```
+Create the new script
 
 ```bash
-$ make generate-jsw
-uv run --script generate-jsw.py
-Public Key: b'LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUNvd0JRWURLMlZ3QXlFQXRTYlVyVXNvWForMU5aQzdRNVpYZW9ZSHpTTk5hTmZ4ODR5TkRkNzZxZXc9Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo='
------ Should get the payload (no expiration time)
-JWT: eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoiYWNjZXNzIn0.7OSZSWWDOQDSYPEQrCpbBEjfFU3qmL7X2c2On4HA2C5AOIZqM_VhR6nmbYY-2u6-vDA7E_hODsbPMB35pBwGDg
-payload: {'a': 'access'}
------ Should raise an exception when token expire after 2 seconds
-JWT: eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoiYWNjZXNzIiwiZXhwIjoxNzQ3OTMyNjkwfQ.DGC7nCWj7xmZKcPeYb7qsoZg8cBxgmdiTuIjk4cFfio5j_78dIR-uT7nfkWj1X2QN9F2jdgViznpNjrz665zCQ
+$ uv init --script generate-jwt.py
+Initialized script at `generate-jwt.py`
+$ uv add --script generate-jwt.py pyJWT cryptography
+Updated `generate-jwt.py`
+```
+
+The execution of the script generates the `public.pub` file with the public key in the main directory of the repository as well as a test of the generated tokens.
+
+```bash
+$ make generate-jwt
+uv run --script generate-jwt.py
+Public Key (bytes):      b'eTfSJ-Qnq_aO6Jg0lGjMo334riU9FPrrNdp_NK--Kj4='
+
+ ----- Should get the payload (no expiration time)
+JWT: eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2Nlc3MifQ.X0SsKKjTd0rwZ7-PVPS8-2qR7wS0etnBeVSBniWNZlL6MTNY13-QMaq5QyDH7ax5CTioNpVhkDfzKcaP1ad8Cw
+payload: {'sub': 'access'}
+
+ ----- Should raise an exception when token expire after 2 seconds
+JWT: eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2Nlc3MiLCJleHAiOjE3NDgwMTIxMzZ9.3Zwgym6mWJ8U9ZWWXeaTUrKKZDJhc20b3EYVYooYnvvRsH0Tzmp2loph-0NpYrEcM8QiSIlixrZ0Pej1kd9tAA
 Sleep for 2 seconds
 Traceback (most recent call last):
-  File "/home/test-libsql/generate-jsw.py", line 94, in <module>
+  File "/home/test-libsql/generate-jwt.py", line 94, in <module>
     main()
     ~~~~^^
-  File "/home/test-libsql/generate-jsw.py", line 89, in main
+  File "/home/test-libsql/generate-jwt.py", line 89, in main
     decode = decode_jwt_token(token, public_key_pem)
-  File "/home/test-libsql/generate-jsw.py", line 67, in decode_jwt_token
+  File "/home/test-libsql/generate-jwt.py", line 67, in decode_jwt_token
     encoded = jwt.decode(token, secret, algorithms='EdDSA')
-  File "/home/test-libsql/.cache/uv/archive-v0/RwwjPIVy3OWC5AYIjmVAA/lib/python3.13/site-packages/jwt/api_jwt.py", line 222, in decode
+  File "/home/test-libsql/.cache/uv/archive-v0/hMO5koCWsFhqoXVCM0nkZ/lib/python3.13/site-packages/jwt/api_jwt.py", line 222, in decode
     decoded = self.decode_complete(
         jwt,
     ...<8 lines>...
         leeway=leeway,
     )
-  File "/home/test-libsql/.cache/uv/archive-v0/RwwjPIVy3OWC5AYIjmVAA/lib/python3.13/site-packages/jwt/api_jwt.py", line 167, in decode_complete
+  File "/home/test-libsql/.cache/uv/archive-v0/hMO5koCWsFhqoXVCM0nkZ/lib/python3.13/site-packages/jwt/api_jwt.py", line 167, in decode_complete
     self._validate_claims(
     ~~~~~~~~~~~~~~~~~~~~~^
         payload,
@@ -185,12 +191,125 @@ Traceback (most recent call last):
         ^^^^^^^^^^^^^^^^
     )
     ^
-  File "/home/test-libsql/.cache/uv/archive-v0/RwwjPIVy3OWC5AYIjmVAA/lib/python3.13/site-packages/jwt/api_jwt.py", line 262, in _validate_claims
+  File "/home/test-libsql/.cache/uv/archive-v0/hMO5koCWsFhqoXVCM0nkZ/lib/python3.13/site-packages/jwt/api_jwt.py", line 262, in _validate_claims
     self._validate_exp(payload, now, leeway)
     ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/test-libsql/.cache/uv/archive-v0/RwwjPIVy3OWC5AYIjmVAA/lib/python3.13/site-packages/jwt/api_jwt.py", line 363, in _validate_exp
+  File "/home/test-libsql/.cache/uv/archive-v0/hMO5koCWsFhqoXVCM0nkZ/lib/python3.13/site-packages/jwt/api_jwt.py", line 363, in _validate_exp
     raise ExpiredSignatureError("Signature has expired")
 jwt.exceptions.ExpiredSignatureError: Signature has expired
+```
+
+### Securize the server
+
+To secure the server, set the file name with the public key in the server environment variable `SQLD_AUTH_JWT_KEY_FILE` ([libSQL daemon .env-example](https://gist.github.com/darkterminal/8b9503b95f35b691a74dd73394675b3a))
+
+```bash
+$ cat .env
+# JWT Key File for Authentication
+SQLD_AUTH_JWT_KEY_FILE=public.pub
+```
+
+If we copy the previously generated file `public.pub` to the data directory `sqld-data`
+
+```bash
+$ cp public.pub sqld-data/.
+```
+
+then the server will be secured.
+
+Create the securized server the fisrt time as following
+
+```bash
+$ make first-start
+mkdir -p sqld-data
+docker run -p 8080:8080 --name secure-libsql-server_latest --env-file .env -v `pwd`/sqld-data:/var/lib/sqld -d ghcr.io/tursodatabase/libsql-server:latest
+d498ad894c974efda905b225ccedb20d441ca58ce5769b3879183fe8cdbf8764
+```
+
+Note that the name of the container changes to `secure-libsql-server_latest` and the file `.env` is passed to the container.
+
+The following times we will use
+
+```bash
+$ make start
+docker start secure-libsql-server_latest
+secure-libsql-server_latest
+```
+
+Running the existing script `playing-with-libsql.py` without arguments should end in the error
+*Authentication failed: Expected authorization header but none given*
+
+```bash
+$ make playing-with-libsql
+uv run --script playing-with-libsql.py
+Traceback (most recent call last):
+  File "/home/test-libsql/playing-with-libsql.py", line 28, in <module>
+    asyncio.run(main(url))
+    ~~~~~~~~~~~^^^^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 719, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/home/test-libsql/playing-with-libsql.py", line 15, in main
+    await client.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER);")
+  File "/home/test-libsql/.cache/uv/archive-v0/_vDrrszsZqtMBJrr-feY9/lib/python3.13/site-packages/libsql_client/hrana/client.py", line 75, in execute
+    return _result_set_from_proto(await proto_result_fut)
+                                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/test-libsql/.cache/uv/archive-v0/_vDrrszsZqtMBJrr-feY9/lib/python3.13/site-packages/libsql_client/hrana/conn.py", line 118, in _do_receive
+    self._receive(msg.data)
+    ~~~~~~~~~~~~~^^^^^^^^^^
+  File "/home/test-libsql/.cache/uv/archive-v0/_vDrrszsZqtMBJrr-feY9/lib/python3.13/site-packages/libsql_client/hrana/conn.py", line 235, in _receive
+    raise _error_from_proto(msg["error"])
+libsql_client.client.LibsqlError: AUTH_HEADER_NOT_FOUND: Authentication failed: Expected authorization header but none given
+```
+
+Running the existing script `playing-with-libsql.py` but using the generated JWT token before
+
+```bash
+$ make playing-with-libsql JWT_TOKEN="eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2Nlc3MifQ.X0SsKKjTd0rwZ7-PVPS8-2qR7wS0etnBeVSBniWNZlL6MTNY13-QMaq5QyDH7ax5CTioNpVhkDfzKcaP1ad8Cw"
+uv run --script playing-with-libsql.py eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2Nlc3MifQ.X0SsKKjTd0rwZ7-PVPS8-2qR7wS0etnBeVSBniWNZlL6MTNY13-QMaq5QyDH7ax5CTioNpVhkDfzKcaP1ad8Cw
+1 rows
+(99,)
+```
+
+and using the expired JWT token must end in the error *Authentication failed: The JWT has expired*
+
+```bash
+$ make playing-with-libsql JWT_TOKEN="eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2Nlc3MiLCJleHAiOjE3NDgwMTIxMzZ9.3Zwgym6mWJ8U9ZWWXeaTUrKKZDJhc20b3EYVYooYnvvRsH0Tzmp2loph-0NpYrEcM8QiSIlixrZ0Pej1kd9tAA"
+uv run --script playing-with-libsql.py eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2Nlc3MiLCJleHAiOjE3NDgwMTIxMzZ9.3Zwgym6mWJ8U9ZWWXeaTUrKKZDJhc20b3EYVYooYnvvRsH0Tzmp2loph-0NpYrEcM8QiSIlixrZ0Pej1kd9tAA
+Traceback (most recent call last):
+  File "/home/test-libsql/playing-with-libsql.py", line 36, in <module>
+    asyncio.run(
+    ~~~~~~~~~~~^
+        main('ws://localhost:8080', args.jwt_token)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 719, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/home/test-libsql/playing-with-libsql.py", line 19, in main
+    await client.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER);")
+  File "/home/test-libsql/.cache/uv/archive-v0/Vavx-WJM0p91f9a24E9QA/lib/python3.13/site-packages/libsql_client/hrana/client.py", line 75, in execute
+    return _result_set_from_proto(await proto_result_fut)
+                                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/test-libsql/.cache/uv/archive-v0/Vavx-WJM0p91f9a24E9QA/lib/python3.13/site-packages/libsql_client/hrana/conn.py", line 118, in _do_receive
+    self._receive(msg.data)
+    ~~~~~~~~~~~~~^^^^^^^^^^
+  File "/home/test-libsql/.cache/uv/archive-v0/Vavx-WJM0p91f9a24E9QA/lib/python3.13/site-packages/libsql_client/hrana/conn.py", line 235, in _receive
+    raise _error_from_proto(msg["error"])
+libsql_client.client.LibsqlError: AUTH_JWT_EXPIRED: Authentication failed: The JWT has expired
 ```
 
 ---

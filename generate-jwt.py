@@ -14,12 +14,17 @@ from typing import Dict
 
 import base64
 import jwt
+import re
 import time
 
 
 def create_pem_keys() -> [str, str]:
     private_key = ed25519.Ed25519PrivateKey.generate()
     public_key = private_key.public_key()
+
+    public_key_bytes = base64.urlsafe_b64encode(
+        public_key.public_bytes_raw()
+    )
 
     private_key_pem = private_key.private_bytes(encoding=serialization.Encoding.PEM,
         format=serialization.PrivateFormat.PKCS8,
@@ -29,10 +34,10 @@ def create_pem_keys() -> [str, str]:
         format=serialization.PublicFormat.SubjectPublicKeyInfo
     )
 
-    return public_key_pem, private_key_pem
+    return public_key_bytes, public_key_pem, private_key_pem
 
 
-def create_jwt_token(secret, expire_seconds = 0) -> str:
+def create_jwt_token(secret: str, expire_seconds: int = 0) -> str:
     payload = {
         "sub": "access",
     }
@@ -49,16 +54,25 @@ def decode_jwt_token(token, secret) -> Dict:
     return encoded
 
 
-def main() -> None:
-    public_key_pem, private_key_pem = create_pem_keys()
+def generate_public_pub_file(public_secret: bytes) -> None:
+    clean_str = str.encode(re.sub('=+$', '', public_secret.decode("utf-8")))
 
-    print("Public Key:", base64.urlsafe_b64encode(public_key_pem))
+    filename = "public.pub"
+    with open(filename, "wb") as fp:
+        fp.write(clean_str)
+
+
+def main() -> None:
+    public_key_bytes, public_key_pem, private_key_pem = create_pem_keys()
+
+    print("Public Key (bytes):\t", public_key_bytes)
+    generate_public_pub_file(public_key_bytes)
 
     for seconds in [0, 2]:
         message = f"Should raise an exception when token expire after {seconds} seconds" if seconds \
             else "Should get the payload (no expiration time)"
 
-        print("-"*5, message)
+        print("\n", "-"*5, message)
 
         token = create_jwt_token(private_key_pem, seconds)
         print("JWT:", token)
