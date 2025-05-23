@@ -112,59 +112,28 @@ Updated `playing-with-libsql.py`
 
 ```bash
 $ make playing-with-libsql
+uv run --script playing-with-libsql.py
 1 rows
 ('It works!!!',)
 ```
 
 Note that the connection URL is hardcoded as a simplification but best practice is that these values are defined in environment variables. The following scripts suffer from the same simplification.
 
-## Add authentication to secure the db server
+## Make a backup
 
-### Generate and verify a key pairs and JWT token
-
-Generate a JWT token using the libraries:
-- [PyJWT](https://pyjwt.readthedocs.io/en/stable/index.html)is a Python library which allows you to encode and decode JSON Web Tokens (JWT). JWT is an open, industry-standard (RFC 7519) for representing claims securely between two parties.
-- [cryptography](https://cryptography.io/en/latest/)is a package designed to expose cryptographic primitives and recipes to Python developers.
+Make the backup (WIP)
 
 ```bash
-$ uv run --script generate-jsw.py
-Public Key: b'LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUNvd0JRWURLMlZ3QXlFQXRTYlVyVXNvWForMU5aQzdRNVpYZW9ZSHpTTk5hTmZ4ODR5TkRkNzZxZXc9Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo='
------ Should get the payload (no expiration time)
-JWT: eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoiYWNjZXNzIn0.7OSZSWWDOQDSYPEQrCpbBEjfFU3qmL7X2c2On4HA2C5AOIZqM_VhR6nmbYY-2u6-vDA7E_hODsbPMB35pBwGDg
-payload: {'a': 'access'}
------ Should raise an exception when token expire after 2 seconds
-JWT: eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoiYWNjZXNzIiwiZXhwIjoxNzQ3OTMyNjkwfQ.DGC7nCWj7xmZKcPeYb7qsoZg8cBxgmdiTuIjk4cFfio5j_78dIR-uT7nfkWj1X2QN9F2jdgViznpNjrz665zCQ
-Sleep for 2 seconds
-Traceback (most recent call last):
-  File "/home/test-libsql/generate-jsw.py", line 94, in <module>
-    main()
-    ~~~~^^
-  File "/home/test-libsql/generate-jsw.py", line 89, in main
-    decode = decode_jwt_token(token, public_key_pem)
-  File "/home/test-libsql/generate-jsw.py", line 67, in decode_jwt_token
-    encoded = jwt.decode(token, secret, algorithms='EdDSA')
-  File "/home/test-libsql/.cache/uv/archive-v0/RwwjPIVy3OWC5AYIjmVAA/lib/python3.13/site-packages/jwt/api_jwt.py", line 222, in decode
-    decoded = self.decode_complete(
-        jwt,
-    ...<8 lines>...
-        leeway=leeway,
-    )
-  File "/home/test-libsql/.cache/uv/archive-v0/RwwjPIVy3OWC5AYIjmVAA/lib/python3.13/site-packages/jwt/api_jwt.py", line 167, in decode_complete
-    self._validate_claims(
-    ~~~~~~~~~~~~~~~~~~~~~^
-        payload,
-        ^^^^^^^^
-    ...<4 lines>...
-        subject=subject,
-        ^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/home/test-libsql/.cache/uv/archive-v0/RwwjPIVy3OWC5AYIjmVAA/lib/python3.13/site-packages/jwt/api_jwt.py", line 262, in _validate_claims
-    self._validate_exp(payload, now, leeway)
-    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/test-libsql/.cache/uv/archive-v0/RwwjPIVy3OWC5AYIjmVAA/lib/python3.13/site-packages/jwt/api_jwt.py", line 363, in _validate_exp
-    raise ExpiredSignatureError("Signature has expired")
-jwt.exceptions.ExpiredSignatureError: Signature has expired
+$ now=$(date +"%Y%m%d"); sqlite3 sqld-data/iku.db/dbs/default/data '.dump' > /tmp/$now.backup.sql
+$ ls /tmp/*.backup.sql
+/tmp/20250523.backup.sql
+$ cat /tmp/20250523.backup.sql
+```
+
+Now, you can restore to another database in the following way
+
+```bash
+$ cat /tmp/20250523.backup.sql | sqlite3 a_restructured.sqlite3
 ```
 
 ## Add authentication to secure the db server
