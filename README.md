@@ -69,6 +69,8 @@ docker start libsql-server_latest
 libsql-server_latest
 ```
 
+The service exposes the database at URL `ws://localhost:8080`.
+
 ## Test the container is running
 
 ```bash
@@ -135,6 +137,12 @@ Now, you can restore to another database in the following way
 ```bash
 $ cat /tmp/20250523.backup.sql | sqlite3 a_restructured.sqlite3
 ```
+
+## Browse the data
+
+There are some [supported GUIs](https://github.com/tursodatabase/libsql?tab=readme-ov-file#gui-support) such as the [downloaded version](https://github.com/outerbase/studio-desktop/releases/) of [Outerbase Studio Desktop](https://github.com/outerbase/studio) as shown below.
+
+![Outerbase Studio Desktop](./docs/outerbase-studio-desktop.png)
 
 ## Add authentication to secure the db server
 
