@@ -106,10 +106,10 @@ Python tool [uv](https://docs.astral.sh/uv/) and its ability to execute single-f
 There are two libraries for LibSQL to interact with Python, the [libsql-client](https://github.com/tursodatabase/libsql-client-py) and the [libsql-experimental-python](https://github.com/tursodatabase/libsql-experimental-python). The former is the recommended client as it is stable, whereas the latter is in development and has the latest features from the libsql database engine, however, it is compatible with the [sqlite](https://docs.python.org/3/library/sqlite3.html) module.
 
 ```bash
-$ uv init --script playing-with-libsql.py
-Initialized script at `playing-with-libsql.py`
-$ uv add --script playing-with-libsql.py argparse asyncio libsql_client
-Updated `playing-with-libsql.py`
+$ uv init --script ./scripts/playing-with-libsql.py
+Initialized script at `script/playing-with-libsql.py`
+$ uv add --script ./scripts/playing-with-libsql.py argparse asyncio libsql_client
+Updated `script/playing-with-libsql.py`
 ```
 
 ```bash
@@ -138,17 +138,17 @@ Generate a JWT token using the libraries:
 Create the new script
 
 ```bash
-$ uv init --script generate-jwt.py
-Initialized script at `generate-jwt.py`
-$ uv add --script generate-jwt.py pyJWT cryptography
-Updated `generate-jwt.py`
+$ uv init --script ./scripts/generate-jwt.py
+Initialized script at `script/generate-jwt.py`
+$ uv add --script ./scripts/generate-jwt.py pyJWT cryptography
+Updated `script/generate-jwt.py`
 ```
 
 The execution of the script generates the `public.pub` file with the public key in the main directory of the repository as well as a test of the generated tokens.
 
 ```bash
 $ make generate-jwt
-uv run --script generate-jwt.py
+uv run --script ./script/generate-jwt.py
 Public Key (bytes):      b'eTfSJ-Qnq_aO6Jg0lGjMo334riU9FPrrNdp_NK--Kj4='
 
  ----- Should get the payload (no expiration time)
@@ -232,7 +232,7 @@ Running the existing script `playing-with-libsql.py` without arguments should en
 
 ```bash
 $ make playing-with-libsql
-uv run --script playing-with-libsql.py
+uv run --script ./script/playing-with-libsql.py
 Traceback (most recent call last):
   File "/home/test-libsql/playing-with-libsql.py", line 28, in <module>
     asyncio.run(main(url))
@@ -272,7 +272,7 @@ and using the expired JWT token must end in the error *Authentication failed: Th
 
 ```bash
 $ make playing-with-libsql JWT_TOKEN="eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2Nlc3MiLCJleHAiOjE3NDgwMTIxMzZ9.3Zwgym6mWJ8U9ZWWXeaTUrKKZDJhc20b3EYVYooYnvvRsH0Tzmp2loph-0NpYrEcM8QiSIlixrZ0Pej1kd9tAA"
-uv run --script playing-with-libsql.py eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2Nlc3MiLCJleHAiOjE3NDgwMTIxMzZ9.3Zwgym6mWJ8U9ZWWXeaTUrKKZDJhc20b3EYVYooYnvvRsH0Tzmp2loph-0NpYrEcM8QiSIlixrZ0Pej1kd9tAA
+uv run --script ./script/playing-with-libsql.py eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2Nlc3MiLCJleHAiOjE3NDgwMTIxMzZ9.3Zwgym6mWJ8U9ZWWXeaTUrKKZDJhc20b3EYVYooYnvvRsH0Tzmp2loph-0NpYrEcM8QiSIlixrZ0Pej1kd9tAA
 Traceback (most recent call last):
   File "/home/test-libsql/playing-with-libsql.py", line 36, in <module>
     asyncio.run(

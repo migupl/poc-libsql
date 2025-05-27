@@ -39,11 +39,11 @@ stop:  ## Stop the container 'CONTAINER_NAME'
 
 .PHONY: playing-with-libsql
 playing-with-libsql: deps ## Run a simple script to test the database. When JWT_TOKEN variable exists then the secure server is used.
-	uv run --script playing-with-libsql.py $(JWT_TOKEN)
+	uv run --script ./scripts/playing-with-libsql.py $(JWT_TOKEN)
 
 .PHONY: generate-jwt
 generate-jwt: deps ## Run a simple script to generate an ED25519 key pairs and JWT token. Test the last one with and without expiration time.
-	uv run --script generate-jwt.py
+	uv run --script ./scripts/generate-jwt.py
 
 .PHONY: help
 help:
