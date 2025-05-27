@@ -11,6 +11,7 @@ $ make
 Available make commands:
 
 alive                     Run `sqld -help` on the container 'libsql-server_latest' to check it is alive
+embedded-replicas         Run a simple script to test the embedded database.
 first-start               Run a new container 'libsql-server_latest' using the image ghcr.io/tursodatabase/libsql-server
 generate-jwt              Run a simple script to generate an ED25519 key pairs and JWT token. Test the last one with and without expiration time.
 playing-with-libsql       Run a simple script to test the database. When JWT_TOKEN variable exists then the secure server is used.
@@ -431,9 +432,115 @@ uv run --script ./scripts/insert-using-sqlalchemy.py
 2025-05-27 14:05:51,326 INFO sqlalchemy.engine.Engine SELECT users.id, users.username, users.email, users.created_at
 FROM users
 2025-05-27 14:05:51,326 INFO sqlalchemy.engine.Engine [generated in 0.00024s] ()
-(13, 'spongebob', 'spongebob@sqlalchemy.org', datetime.datetime(2025, 5, 27, 12, 5, 51))
+(1, 'spongebob', 'spongebob@sqlalchemy.org', datetime.datetime(2025, 5, 27, 12, 5, 51))
 2025-05-27 14:05:51,328 INFO sqlalchemy.engine.Engine ROLLBACK
 ```
+
+## Local First, embedded Replicas
+
+Embedded replicas provide a smooth switch between local and remote database operations, allowing the same database to adapt to various scenarios effortlessly. They also ensure speedy data access by syncing local copies with the remote database, enabling microsecond-level read operations — a significant advantage for scenarios demanding quick data retrieval.
+
+### Offline Reads
+
+A new script `embedded-replicas.py` is used
+
+```bash
+$ uv init --script ./scripts/embedded-replicas.py
+Initialized script at `script/embedded-replicas.py`
+$ uv add --script ./scripts/embedded-replicas.py libsql-experimental
+Updated `script/embedded-replicas.py`
+```
+
+Start the server
+
+```bash
+$ make start
+docker start libsql-server_latest
+libsql-server_latest
+```
+
+Create the embedded replica `local.db` with the first execution
+
+```bash
+$ make embedded-replicas
+uv run --script ./scripts/embedded-replicas.py
+2025-05-27T15:33:39.647616Z  INFO libsql::replication::remote_client: Attempting to perform handshake with primary.
+[]
+```
+
+The local files created
+
+```bash
+$ ls -1 local.*
+local.db
+local.db-client_wal_index
+```
+
+Insert an user into the database
+
+```bash
+$ make insert-using-sqlalchemy
+uv run --script ./scripts/insert-using-sqlalchemy.py
+2025-05-27 17:35:22,682 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-05-27 17:35:22,684 INFO sqlalchemy.engine.Engine INSERT INTO users (username, email, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)
+2025-05-27 17:35:22,684 INFO sqlalchemy.engine.Engine [generated in 0.00025s] ('spongebob', 'spongebob@sqlalchemy.org')
+2025-05-27 17:35:22,688 INFO sqlalchemy.engine.Engine COMMIT
+2025-05-27 17:35:22,692 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-05-27 17:35:22,693 INFO sqlalchemy.engine.Engine SELECT users.id, users.username, users.email, users.created_at 
+FROM users
+2025-05-27 17:35:22,693 INFO sqlalchemy.engine.Engine [generated in 0.00020s] ()
+(1, 'spongebob', 'spongebob@sqlalchemy.org', datetime.datetime(2025, 5, 27, 15, 35, 22))
+2025-05-27 17:35:22,696 INFO sqlalchemy.engine.Engine ROLLBACK
+```
+
+Sync the embedded replica
+
+```bash
+$ make embedded-replicas
+uv run --script ./scripts/embedded-replicas.py
+2025-05-27T15:35:58.983279Z  INFO libsql::replication::remote_client: Attempting to perform handshake with primary.
+[(1, 'spongebob', 'spongebob@sqlalchemy.org', '2025-05-27 15:35:22')]
+```
+
+and the `local.db` dump shows the synchronized data
+
+```bash
+$ sqlite3 local.db .dump
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE schema_migrations (id VARCHAR(255) NOT NULL PRIMARY KEY);
+INSERT INTO schema_migrations VALUES('1748259306');
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL,
+  email TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+INSERT INTO users VALUES(1,'spongebob','spongebob@sqlalchemy.org','2025-05-27 15:17:30');
+INSERT INTO sqlite_sequence VALUES('users',1);
+COMMIT;
+```
+
+The script is running an explicit synchronisation
+
+```python
+conn = libsql.connect("local.db", sync_url=url)
+conn.sync()
+...
+```
+
+A periodic synchronisation could be used as following
+
+```python
+conn = libsql.connect("local.db", sync_interval=20, sync_url=url)
+...
+```
+
+### Offline Writes
+
+Write locally, even offline, and let Turso manage the sync to and from your remote database.
+
+Currently, May 2025, in beta testing.
 
 ## Run without install `uv` using Docker
 
@@ -449,4 +556,4 @@ Installed 35 packages in 54ms
 ```
 
 ---
-Related to the articles [SQLite-on-the-Server Is Misunderstood: Better At Hyper-Scale Than Micro-Scale](https://rivet.gg/blog/2025-02-16-sqlite-on-the-server-is-misunderstood) and [Self-hosting Turso libSQL](https://hubertlin.me/posts/2024/11/self-hosting-turso-libsql/)
+Inspired by articles [SQLite-on-the-Server Is Misunderstood: Better At Hyper-Scale Than Micro-Scale](https://rivet.gg/blog/2025-02-16-sqlite-on-the-server-is-misunderstood) and [Self-hosting Turso libSQL](https://hubertlin.me/posts/2024/11/self-hosting-turso-libsql/)

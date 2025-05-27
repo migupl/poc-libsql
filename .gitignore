@@ -1,3 +1,5 @@
 sqld-data
 migrations/schema.sql
+
+local.db*
 public.pub

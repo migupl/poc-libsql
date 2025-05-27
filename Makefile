@@ -37,6 +37,10 @@ alive:  ## Run `sqld -help` on the container 'CONTAINER_NAME' to check it is ali
 stop:  ## Stop the container 'CONTAINER_NAME'
 	docker stop $(CONTAINER_NAME)
 
+.PHONY: embedded-replicas
+embedded-replicas: deps ## Run a simple script to test the embedded database.
+	uv run --script ./scripts/embedded-replicas.py
+
 .PHONY: generate-jsw
 generate-jsw: deps ## Run a simple script to generate an ED25519 key pairs and JWT token. Test the last one with and without expiration time.
 	uv run --script ./scripts/generate-jsw.py
