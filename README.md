@@ -542,6 +542,13 @@ Write locally, even offline, and let Turso manage the sync to and from your remo
 
 Currently, May 2025, in beta testing.
 
+## Database encryption
+
+libSQL allows [encryption at rest](https://docs.turso.tech/features/embedded-replicas/introduction#encryption-at-rest). This feature enhances data security by encrypting database files, making them inaccessible without the correct encryption key.
+
+Encrypted databases appear as raw data and cannot be read as standard SQLite databases. You must use the [libSQL client for any operations](https://docs.turso.tech/features/embedded-replicas/introduction#encryption-at-rest).
+
+
 ## Run without install `uv` using Docker
 
 Setting an alias and executing the examples without using make is an easy way to go
