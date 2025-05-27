@@ -404,6 +404,37 @@ Now, you can restore to another database in the following way
 $ cat /tmp/20250526.backup.sql | sqlite3 a_restructured.sqlite3
 ```
 
+## Insert an user after the first migration using [SQLAlchemy](https://docs.sqlalchemy.org/en/20/)
+
+A new python script is used
+
+```bash
+$ uv init --script ./scripts/insert-using-sqlalchemy.py
+Initialized script at `script/insert-using-sqlalchemy.py`
+$ uv add --script ./scripts/insert-using-sqlalchemy.py sqlalchemy sqlalchemy-libsql
+Updated `script/insert-using-sqlalchemy.py`
+```
+
+Run an insert ad following
+
+```bash
+$ make start
+docker start libsql-server_latest
+libsql-server_latest
+$ make insert-using-sqlalchemy
+uv run --script ./scripts/insert-using-sqlalchemy.py
+2025-05-27 14:05:51,315 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-05-27 14:05:51,316 INFO sqlalchemy.engine.Engine INSERT INTO users (username, email, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)
+2025-05-27 14:05:51,316 INFO sqlalchemy.engine.Engine [generated in 0.00025s] ('spongebob', 'spongebob@sqlalchemy.org')
+2025-05-27 14:05:51,320 INFO sqlalchemy.engine.Engine COMMIT
+2025-05-27 14:05:51,324 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-05-27 14:05:51,326 INFO sqlalchemy.engine.Engine SELECT users.id, users.username, users.email, users.created_at
+FROM users
+2025-05-27 14:05:51,326 INFO sqlalchemy.engine.Engine [generated in 0.00024s] ()
+(13, 'spongebob', 'spongebob@sqlalchemy.org', datetime.datetime(2025, 5, 27, 12, 5, 51))
+2025-05-27 14:05:51,328 INFO sqlalchemy.engine.Engine ROLLBACK
+```
+
 ## Run without install `uv` using Docker
 
 Setting an alias and executing the examples without using make is an easy way to go

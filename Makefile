@@ -37,6 +37,14 @@ alive:  ## Run `sqld -help` on the container 'CONTAINER_NAME' to check it is ali
 stop:  ## Stop the container 'CONTAINER_NAME'
 	docker stop $(CONTAINER_NAME)
 
+.PHONY: generate-jsw
+generate-jsw: deps ## Run a simple script to generate an ED25519 key pairs and JWT token. Test the last one with and without expiration time.
+	uv run --script ./scripts/generate-jsw.py
+
+.PHONY: insert-using-sqlalchemy
+insert-using-sqlalchemy: deps ## Run a simple script to insert an user after first migration using the unsecure container.
+	uv run --script ./scripts/insert-using-sqlalchemy.py
+
 .PHONY: playing-with-libsql
 playing-with-libsql: deps ## Run a simple script to test the database. When JWT_TOKEN variable exists then the secure server is used.
 	uv run --script ./scripts/playing-with-libsql.py $(JWT_TOKEN)
