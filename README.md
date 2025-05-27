@@ -404,5 +404,18 @@ Now, you can restore to another database in the following way
 $ cat /tmp/20250526.backup.sql | sqlite3 a_restructured.sqlite3
 ```
 
+## Run without install `uv` using Docker
+
+Setting an alias and executing the examples without using make is an easy way to go
+
+```bash
+$ alias uv='docker run --rm -it --network="host" --volume .:/app ghcr.io/astral-sh/uv:alpine uv'
+$ uv run --script /app/scripts/playing-with-libsql.py
+Installed 35 packages in 54ms
+
+1 rows
+('It works!!!',)
+```
+
 ---
 Related to the articles [SQLite-on-the-Server Is Misunderstood: Better At Hyper-Scale Than Micro-Scale](https://rivet.gg/blog/2025-02-16-sqlite-on-the-server-is-misunderstood) and [Self-hosting Turso libSQL](https://hubertlin.me/posts/2024/11/self-hosting-turso-libsql/)
